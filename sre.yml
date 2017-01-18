@@ -1,0 +1,30 @@
+---
+- name: Installing and configuring httpd server
+  hosts: all
+  sudo: yes
+
+  tasks:
+  - name: Install httpd package
+    yum: name=httpd state=present
+
+#  - name: create self-signed SSL cert
+#    shell: openssl req -new -nodes -x509 -subj "/C=US/ST=STATE/L=CITY/O=IT/CN=${ansible_fqdn}" -keyout /etc/pki/tls/private/server.key -out /etc/pki/tls/certs/server.crt -extensions v3_ca creates=/etc/pki/tls/certs/server.crt
+
+  - name: Start httpd server
+    service: name=httpd state=running
+
+  - name: install iptables
+    yum: name=iptables state=present
+
+  - name: start iptables
+    command: 'service iptables save'
+
+  - name: Open 22 port
+    shell: /sbin/iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT && /sbin/iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT && /sbin//iptables -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+    notify: iptables restarted
+
+  handlers:
+  - name: iptables restarted
+    command: service iptables save
+
+
